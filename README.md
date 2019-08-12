@@ -8,8 +8,8 @@
 
 Проект основан на использовании:  
 
-1)[HeadHunter API](https://api.hh.ru/)  
-2)[Superjob API](https://api.superjob.ru/)  
+1) [HeadHunter API](https://api.hh.ru/)  
+2) [Superjob API](https://api.superjob.ru/)  
 
 Также проект разделен на 2 соответствующих скрипта:  
 
