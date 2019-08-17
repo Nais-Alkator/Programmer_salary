@@ -1,7 +1,6 @@
 import requests
 from terminaltables import AsciiTable, DoubleTable, SingleTable
 
-
 URL = "https://api.hh.ru/vacancies/"
 HEADERS = {"User-Agent": "User-Agent"}
 SEARCH_AREA = 1
@@ -9,8 +8,10 @@ SEARCH_PERIOD = 30
 
 
 def get_quantity_of_vacancies(vacancy):
-    params = {"text": "Разработчик {}".format(vacancy),
-              "area": SEARCH_AREA, "period": SEARCH_PERIOD}
+    params = {
+        "text": "Разработчик {}".format(vacancy),
+        "area": SEARCH_AREA,
+        "period": SEARCH_PERIOD}
     response = requests.get(URL, params=params, headers=HEADERS)
     if not response:
         raise ApiResponseFormatError("Ошибка")
@@ -33,13 +34,13 @@ def get_salaries_of_developers(vacancy):
             salary = {"from": None, "to": None}
         else:
             salary = salary
-    salaries_in_rub.append(salary)
+        salaries_in_rub.append(salary)
     return salaries_in_rub
 
 
 def get_predict_rub_salary(vacancy):
     salaries = get_salaries_of_developers(vacancy)
-    predict_salary = list()
+    predict_salary = []
     for salary in salaries:
         salary_from = salary["from"]
         salary_to = salary["to"]
@@ -70,14 +71,21 @@ def get_vacancy_processed(vacancy):
 def get_average_salary_for_one_vacancy(vacancy):
     average_salary_for_one_vacancy = sum(
         get_predict_rub_salary(vacancy)) / get_vacancy_processed(vacancy)
-    if ZeroDivisionError:
-        return 0
     return int(average_salary_for_one_vacancy)
 
 
-def get_statistics_for_languages_from_headHunter():
-    top_10_programming_languages = ["Javascript", "Java", "Python", "Ruby",
-                                    "PHP", "C++", "C#", "C", "Go", "Scala"]
+def get_statistics_for_languages_from_HeadHunter():
+    top_10_programming_languages = [
+        "Javascript",
+        "Java",
+        "Python",
+        "Ruby",
+        "PHP",
+        "C++",
+        "C#",
+        "C",
+        "Go",
+        "Scala"]
     statistics_for_all_languages = dict()
     for language in top_10_programming_languages:
         statistics_for_one_language = {
@@ -114,12 +122,14 @@ def get_global_vacancy_data(vacancy):
 
 
 def print_statistics_table_view():
-    data = get_statistics_for_languages_from_headHunter()
-    table_data = [["Язык", "Вакансий найдено",
-                   "Вакансий обработано", "Средняя зарплата"]]
-    for language in languages:
+    stat_for_languages = get_statistics_for_languages_from_HeadHunter()
+    table_data = [["Язык",
+                   "Вакансий найдено",
+                   "Вакансий обработано",
+                   "Средняя зарплата"]]
+    for language in stat_for_languages:
         row = [language]
-        language_keys = data[language]
+        language_keys = stat_for_languages[language]
         language_values = language_keys.values()
         row.extend(language_values)
         table_data.append(row)
