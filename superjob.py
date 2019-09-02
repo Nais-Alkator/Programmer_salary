@@ -13,16 +13,6 @@ CATALOG_OF_PROFESSION = 48
 COUNT = 100
 
 
-def get_developers_professions():
-    params = {"town": TOWN_ID, "catalogues": CATALOG_OF_PROFESSION, "count": COUNT}
-    response = requests.get(URL, headers=HEADERS, params=params)
-    response.raise_for_status()
-    response = response.json()
-    data = response["objects"]
-    professions = [item["profession"] for item in data]
-    return professions
-
-
 def get_predicted_rub_salaries_for_superjob(vacancy):
     data = get_global_data(vacancy)
     predicted_rub_salaries = list()
