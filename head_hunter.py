@@ -1,5 +1,7 @@
 import requests
 from terminaltables import AsciiTable, DoubleTable, SingleTable
+from secondary_functions import print_statistics_table_view
+from terminaltables import AsciiTable
 
 URL = "https://api.hh.ru/vacancies/"
 HEADERS = {"User-Agent": "User-Agent"}
@@ -13,8 +15,7 @@ def get_quantity_of_vacancies(vacancy):
         "area": SEARCH_AREA,
         "period": SEARCH_PERIOD}
     response = requests.get(URL, params=params, headers=HEADERS)
-    if not response:
-        raise ApiResponseFormatError("Ошибка")
+    response.raise_for_status()
     response.ok
     response = response.json()
     quantity_of_vacancy = response["found"]
@@ -38,9 +39,9 @@ def get_salaries_of_developers(vacancy):
     return salaries_in_rub
 
 
-def get_predict_rub_salary(vacancy):
+def get_predicted_rub_salaries(vacancy):
     salaries = get_salaries_of_developers(vacancy)
-    predict_salary = []
+    predicted_salaries = []
     for salary in salaries:
         salary_from = salary["from"]
         salary_to = salary["to"]
@@ -55,48 +56,22 @@ def get_predict_rub_salary(vacancy):
         elif salary_from is not None and salary_to is not None:
             average_salary = (salary_from + salary_to) / 2
             average_salary = int(average_salary)
-        predict_salary.append(average_salary)
-    return predict_salary
+        predicted_salaries.append(average_salary)
+    return predicted_salaries
 
 
-def get_vacancy_processed(vacancy):
-    predict_salary = get_predict_rub_salary(vacancy)
+def get_vacancy_processed(predicted_salaries):
     vacancy_prosecced = 0
-    for salary in predict_salary:
+    for salary in predicted_salaries:
         if salary != 0:
             vacancy_prosecced += 1
     return vacancy_prosecced
 
 
-def get_average_salary_for_one_vacancy(vacancy):
+def get_average_salary_for_one_vacancy(predicted_salaries):
     average_salary_for_one_vacancy = sum(
-        get_predict_rub_salary(vacancy)) / get_vacancy_processed(vacancy)
+        predicted_salaries) / get_vacancy_processed(predicted_salaries)
     return int(average_salary_for_one_vacancy)
-
-
-def get_statistics_for_languages_from_HeadHunter():
-    top_10_programming_languages = [
-        "Javascript",
-        "Java",
-        "Python",
-        "Ruby",
-        "PHP",
-        "C++",
-        "C#",
-        "C",
-        "Go",
-        "Scala"]
-    statistics_for_all_languages = dict()
-    for language in top_10_programming_languages:
-        statistics_for_one_language = {
-            language: {
-                "vacancy_found": get_quantity_of_vacancies(language),
-                "vacancy_processed": get_vacancy_processed(language),
-                "average_salary": get_average_salary_for_one_vacancy(language)
-            }
-        }
-        statistics_for_all_languages.update(statistics_for_one_language)
-    return statistics_for_all_languages
 
 
 def get_global_vacancy_data(vacancy):
@@ -111,8 +86,7 @@ def get_global_vacancy_data(vacancy):
             "only_with_salary": "True",
             "page": page}
         page_data = requests.get(URL, params=params, headers=HEADERS)
-        if not page_data:
-            raise ApiResponseFormatError("Ошибка")
+        page_data.raise_for_status()
         page_data = page_data.json()
         pages_number = page_data['pages']
         print("{} Добавлено из {}".format(page, page_data["pages"]))
@@ -121,34 +95,37 @@ def get_global_vacancy_data(vacancy):
     return global_data
 
 
-def print_statistics_table_view():
-    stat_for_languages = get_statistics_for_languages_from_HeadHunter()
-    table_data = [["Язык",
-                   "Вакансий найдено",
-                   "Вакансий обработано",
-                   "Средняя зарплата"]]
-    for language in stat_for_languages:
-        row = [language]
-        language_keys = stat_for_languages[language]
-        language_values = language_keys.values()
-        row.extend(language_values)
-        table_data.append(row)
-    title = 'HeadHunter Moscow'
-    table = AsciiTable(table_data, title)
-    print(table.table)
-    print()
-
-
-class ApiResponseFormatError(KeyError):
-    pass
+def get_statistics_for_languages():
+    top_10_programming_languages = [
+        "Javascript",
+        "Java",
+        "Python",
+        "Ruby",
+        "PHP",
+        "C++",
+        "C#",
+        "C",
+        "Go",
+        "Scala"]
+    statistics_for_all_languages = dict()
+    for language in top_10_programming_languages:
+        predicted_salaries = get_predicted_rub_salaries(language)
+        statistics_for_all_languages[language] = {
+                "vacancy_found": get_quantity_of_vacancies(language),
+                "vacancy_processed": get_vacancy_processed(predicted_salaries),
+                "average_salary": get_average_salary_for_one_vacancy(predicted_salaries)
+            }
+    return statistics_for_all_languages
 
 
 if __name__ == "__main__":
     try:
-        print_statistics_table_view()
+        STAT_FOR_LANGUAGES = get_statistics_for_languages()
+    except requests.exceptions.HTTPError as error:
+        exit("Can't get data from server:\n{0}".format(error))
+    try:
+        print_statistics_table_view(STAT_FOR_LANGUAGES)
     except requests.exceptions.ConnectionError as error:
         exit("Can't get data from server:\n{0}".format(error))
     except requests.exceptions.HTTPError as error:
         exit("Can't get data from server:\n{0}".format(error))
-    except ApiResponseFormatError as error:
-        exit("Ошибка программы")
