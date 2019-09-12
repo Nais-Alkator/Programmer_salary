@@ -21,20 +21,10 @@ def get_quantity_of_vacancies(vacancy):
     return quantity_of_vacancy
 
 
-def get_salaries_of_developers(vacancy):
-    global_vacancy_data = get_global_vacancy_data(vacancy)
-    salaries_in_rub = []
-    salaries = []
-    for page in global_vacancy_data:
-        for item in page:
-            item = item["salary"]
-            salaries.append(item)
-    for salary in salaries:
-        if salary["currency"] != "RUR":
-            salary = {"from": None, "to": None}
-        else:
-            salary = salary
-        salaries_in_rub.append(salary)
+def download_salaries(vacancy):
+    vacancies = download_vacancies(vacancy)
+    salaries = [salary["salary"] for salary in vacancies]
+    salaries_in_rub = [salary if salary["currency"] != "RUR" else salary for salary in salaries]
     return salaries_in_rub
 
 
@@ -52,8 +42,8 @@ def get_average_salary_for_one_vacancy(predicted_salaries):
     return int(average_salary_for_one_vacancy)
 
 
-def get_global_vacancy_data(vacancy):
-    global_vacancy_data = list()
+def download_vacancies(vacancy):
+    vacancies = list()
     page = 0
     pages_number = 1
     while page < pages_number:
@@ -69,8 +59,8 @@ def get_global_vacancy_data(vacancy):
         pages_number = page_data['pages']
         print("{} Добавлено из {}".format(page, page_data["pages"]))
         page += 1
-        global_vacancy_data.append(page_data["items"])
-    return global_vacancy_data
+        vacancies.extend(page_data["items"])
+    return vacancies
 
 
 def get_statistics_for_languages():
@@ -87,7 +77,7 @@ def get_statistics_for_languages():
         "Scala"]
     statistics_for_all_languages = dict()
     for language in top_10_programming_languages:
-        salaries = get_salaries_of_developers(language)
+        salaries = download_salaries(language)
         predicted_salaries = [predict_salary(salary["from"], salary["to"]) for salary in salaries]
         statistics_for_all_languages[language] = {
                 "vacancy_found": get_quantity_of_vacancies(language),
@@ -99,10 +89,10 @@ def get_statistics_for_languages():
 
 if __name__ == "__main__":
     try:
-        stat_for_langguages = get_statistics_for_languages()
+        stat_for_languages = get_statistics_for_languages()
     except requests.exceptions.HTTPError as error:
         exit("Can't get data from server:\n{0}".format(error))
     except requests.exceptions.ConnectionError as error:
         exit("Can't get data from server:\n{0}".format(error))
-    print_statistics_table_view(stat_for_langguages)
+    print_statistics_table_view(stat_for_languages)
    

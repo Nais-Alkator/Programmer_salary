@@ -13,8 +13,8 @@ CATALOG_OF_PROFESSION = 48
 COUNT = 100
 
 
-def get_global_vacancy_data(language):
-    global_vacancy_data = list()
+def download_vacancies(language):
+    vacancies = list()
     page = 0
     pages_number = 1
     while page < pages_number:
@@ -28,25 +28,21 @@ def get_global_vacancy_data(language):
         pages_number = page_data['total']
         print("{} Добавлено из {}".format(page, page_data["total"]))
         page += 1
-        global_vacancy_data.extend(page_data["objects"])
-    return global_vacancy_data
+        vacancies.extend(page_data["objects"])
+    return vacancies
 
 
 def get_vacancy_processed(predicted_salaries):
     vacancy_processed = 0
     for salary in predicted_salaries:
-        if salary != None:
+    	if salary != None:
             vacancy_processed += 1
     return vacancy_processed
 
 
 def get_average_salary_for_one_vacancy(predicted_salaries):
-    average_salaries_for_count = list()
-    for salary in predicted_salaries:
-        if salary is not None:
-            salary = int(salary)
-            average_salaries_for_count.append(salary)
-    if len(average_salaries_for_count) != 0:
+    average_salaries_for_count = [salary != None for salary in predicted_salaries]
+    if average_salaries_for_count:
         final_average_salary = sum(
             average_salaries_for_count) / len(average_salaries_for_count)
     else:
@@ -68,8 +64,8 @@ def get_statistics_for_languages():
         "Scala"]
     statistics_for_all_languages = dict()
     for language in top_10_programming_languages:
-    	global_vacancy_data = get_global_vacancy_data(language)
-    	predicted_salaries = [predict_salary(salary["payment_from"], salary["payment_to"]) for salary in global_vacancy_data if salary["currency"] == "rub"]
+    	vacancies = download_vacancies(language)
+    	predicted_salaries = [predict_salary(salary["payment_from"], salary["payment_to"]) for salary in vacancies if salary["currency"] == "rub"]
     	statistics_for_all_languages[language] = {
                 "vacancy_found": len(predicted_salaries),
                 "vacancy_processed": get_vacancy_processed(predicted_salaries),
@@ -80,11 +76,11 @@ def get_statistics_for_languages():
 
 if __name__ == "__main__":
 	try:
-	    stat_for_langguages = get_statistics_for_languages()
+	    stat_for_languages = get_statistics_for_languages()
 	except requests.exceptions.HTTPError as error:
 		exit("Can't get data from server:\n{0}".format(error))
-	except requests.exceptions.HTTPError as error:
+	except requests.exceptions.ConnectionError as error:
 		exit("Can't get data from server:\n{0}".format(error))
-	print_statistics_table_view(stat_for_langguages)
+	print_statistics_table_view(stat_for_languages)
 	
 

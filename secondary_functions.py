@@ -1,14 +1,14 @@
 from terminaltables import AsciiTable
 
 
-def print_statistics_table_view(stat_for_langguages):
+def print_statistics_table_view(stat_for_languages):
     table_data = [["Язык",
                    "Вакансий найдено",
                    "Вакансий обработано",
                    "Средняя зарплата"]]
-    for language in stat_for_langguages:
+    for language in stat_for_languages:
         row = [language]
-        language_keys = stat_for_langguages[language]
+        language_keys = stat_for_languages[language]
         vacancy_found = language_keys["vacancy_found"]
         row.append(str(vacancy_found))
         vacancy_processed = language_keys["vacancy_processed"]
@@ -16,6 +16,20 @@ def print_statistics_table_view(stat_for_langguages):
         average_salary = language_keys["average_salary"]
         row.append(str(average_salary))
         table_data.append(row)
+    title = 'SuperJob Moscow'
+    table = AsciiTable(table_data, title)
+    print(table.table)
+    print()
+
+def print_statistics_table_view_test(stat_for_languages):
+    
+    table_data = [["Язык",
+                   "Вакансий найдено",
+                   "Вакансий обработано",
+                   "Средняя зарплата"]]
+    for language in stat_for_languages:
+        row = [language, stat_for_languages[language["vacancy_found"]], stat_for_languages[language["vacancy_processed"]], stat_for_languages[language["average_salary"]]]
+        table_data.append[row]
     title = 'SuperJob Moscow'
     table = AsciiTable(table_data, title)
     print(table.table)
