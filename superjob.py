@@ -32,16 +32,9 @@ def download_vacancies(language):
     return vacancies
 
 
-def get_vacancy_processed(predicted_salaries):
-    vacancy_processed = 0
-    for salary in predicted_salaries:
-    	if salary != None:
-            vacancy_processed += 1
-    return vacancy_processed
-
-
 def get_average_salary_for_one_vacancy(predicted_salaries):
-    average_salaries_for_count = [salary != None for salary in predicted_salaries]
+    average_salaries_for_count = [
+        salary for salary in predicted_salaries if salary is not None]
     if average_salaries_for_count:
         final_average_salary = sum(
             average_salaries_for_count) / len(average_salaries_for_count)
@@ -64,23 +57,25 @@ def get_statistics_for_languages():
         "Scala"]
     statistics_for_all_languages = dict()
     for language in top_10_programming_languages:
-    	vacancies = download_vacancies(language)
-    	predicted_salaries = [predict_salary(salary["payment_from"], salary["payment_to"]) for salary in vacancies if salary["currency"] == "rub"]
-    	statistics_for_all_languages[language] = {
-                "vacancy_found": len(predicted_salaries),
-                "vacancy_processed": get_vacancy_processed(predicted_salaries),
-                "average_salary": get_average_salary_for_one_vacancy(predicted_salaries)
-            }
+        vacancies = download_vacancies(language)
+        predicted_salaries = [
+            predict_salary(
+                salary["payment_from"],
+                salary["payment_to"]) for salary in vacancies if salary["currency"] == "rub"]
+        vacancies_processed = [
+            vacancy_processed for vacancy_processed in predicted_salaries if vacancy_processed is not None]
+        statistics_for_all_languages[language] = {
+            "vacancy_found": len(predicted_salaries),
+            "vacancy_processed": len(vacancies_processed),
+            "average_salary": get_average_salary_for_one_vacancy(predicted_salaries)}
     return statistics_for_all_languages
 
 
 if __name__ == "__main__":
-	try:
-	    stat_for_languages = get_statistics_for_languages()
-	except requests.exceptions.HTTPError as error:
-		exit("Can't get data from server:\n{0}".format(error))
-	except requests.exceptions.ConnectionError as error:
-		exit("Can't get data from server:\n{0}".format(error))
-	print_statistics_table_view(stat_for_languages)
-	
-
+    try:
+        stat_for_languages = get_statistics_for_languages()
+    except requests.exceptions.HTTPError as error:
+        exit("Can't get data from server:\n{0}".format(error))
+    except requests.exceptions.ConnectionError as error:
+        exit("Can't get data from server:\n{0}".format(error))
+    print_statistics_table_view(stat_for_languages)
